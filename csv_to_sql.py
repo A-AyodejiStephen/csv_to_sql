@@ -1,4 +1,5 @@
-import pandas as pd
+#Author: Ayodeji Ajayi
+
 filePath = input("Enter csv file name [full path]: ")
 while ".csv" not in filePath:
     print(filePath + " is not a csv file.")
@@ -48,7 +49,7 @@ if response == "y": #auto assign data type
         if i == "" or i == "\n":
             typeDict.update({fileDict[0][pos]:"VARCHAR(255)"}) #Null cells is assigned varchar by default
         elif i.isnumeric():
-            typeDict.update({fileDict[0][pos]:"INT"})    #Assign float value to numbers
+            typeDict.update({fileDict[0][pos]:"INT"})    #Assign int value to numbers
         elif "." in i:
             try:
                 test = float(i)
@@ -70,7 +71,7 @@ else:
 # print(typeDict)
 
 # print(fileDict)
-sqlFileName = filePath[:-4] + "_copy.sql"
+sqlFileName = filePath[:-4] + ".sql"
 try:
     print("New filename is: " + sqlFileName)
     sqlFile = open(sqlFileName, "x")
@@ -90,24 +91,25 @@ for i in fileDict[0]:
     else:
         sqlFile.write("   " + i + " " + typeDict[i] + ",\n")
 #insert values into table
-sqlFile.write("INSERT INTO '" +  fileName + "' VALUES ")
+sqlFile.write("INSERT INTO `" +  fileName + "` VALUES ")
 for i in range(1,len(fileDict)):
-    sqlFile.write("  (")
+    sqlFile.write("(")
     count = 0
     for j in fileDict[i]:
-        if typeDict[fileDict[0][count]] == "FLOAT(24)" or typeDict[fileDict[0][count]] == "INT": #don't add quotes to numeric values
+        if typeDict[fileDict[0][count]] == "FLOAT(24)" or typeDict[fileDict[0][count]] == "INT" or len(j) <= 1: #don't add quotes to numeric or null values
             if "\n" in j:
-                sqlFile.write(j[0:j.find("\n")]) #remove newline character, don't add comma
+                if len(j) == 1 : sqlFile.write("NULL") #write null
+                else: sqlFile.write(j[0:j.find("\n")]) #remove newline character, don't add comma
             else:    
-                sqlFile.write(j + ",") #add comma
+                if len(j) == 0 : sqlFile.write("NULL,")
+                else :  sqlFile.write(j + ",") #add comma
         else:   #add quote to other values
             if "\n" in j:
-                 sqlFile.write("'" + j[0:j.find("\n")] + "'") #remove newline character, don't add comma
+                 sqlFile.write('"' + j[0:j.find("\n")] + '"') #remove newline character, don't add comma
             else:
-                sqlFile.write("'"+ j +"',")    #add comma
+                sqlFile.write('"'+ j +'",')    #add comma
         count+=1
     if i == len(fileDict)-1: sqlFile.write(");\n\n")
     else: sqlFile.write("),\n")
 sqlFile.close()
 print(str(len(fileDict)) + " values inserted into query: " + sqlFileName)
-
